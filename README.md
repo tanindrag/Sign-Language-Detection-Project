@@ -42,9 +42,9 @@ This project showcases a complete end-to-end pipeline: from data preprocessing a
    cd Sign-Language-Detection-Project
    
 2. **Install dependencies:**
-```bash
+   ```bash
    pip install -r requirements.txt
-```
+   ```
 ### Usage
 Run the live translator:
    ```bash
@@ -66,5 +66,5 @@ Note: The raw training dataset is excluded from this repository to maintain a li
 2. Sentence Construction: Implementing NLP to group recognized letters into meaningful words and sentences.
 3. Motion Recognition: Adding LSTM layers to recognize dynamic signs like 'J' and 'Z'.
 
-📜 License
+### 📜 License
 Distributed under the MIT License. See LICENSE file for details.
