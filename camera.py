@@ -39,8 +39,6 @@ while True:
 
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
-            # Draw hand landmarks on the frame
-            #mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
             # Get the bounding box of the hand
             x_min = min([lm.x for lm in hand_landmarks.landmark])
