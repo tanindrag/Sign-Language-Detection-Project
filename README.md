@@ -42,8 +42,9 @@ This project showcases a complete end-to-end pipeline: from data preprocessing a
    cd Sign-Language-Detection-Project
    
 2. **Install dependencies:**
-     pip install -r requirements.txt
-
+```bash
+   pip install -r requirements.txt
+```
 ### Usage
 Run the live translator:
    ```bash
