@@ -9,7 +9,12 @@ mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
 mp_draw = mp.solutions.drawing_utils
 
-model = tf.keras.models.load_model(r'C:\\Users\\tanin\\OneDrive\\Desktop\\emerging_trends\\Sign Language\\asl_sign_language_model1.keras')
+# Get the directory where camera.py is located
+base_path = os.path.dirname(__file__)
+model_path = os.path.join(base_path, 'asl_sign_language_model.keras')
+
+# Load the model using the relative path
+model = tf.keras.models.load_model(model_path)
 
 categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y']
 
