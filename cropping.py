@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 import os
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 input_root = os.path.join(BASE_DIR, "extra")
