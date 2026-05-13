@@ -2,9 +2,11 @@ import cv2
 import mediapipe as mp
 import os
 
-# Paths
-input_root = r"C:\Users\tanin\OneDrive\Desktop\Emerging Trends\Sign Language\extra"
-output_root = r"C:\Users\tanin\OneDrive\Desktop\Emerging Trends\Sign Language\clean_extra"
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+input_root = os.path.join(BASE_DIR, "extra")
+output_root = os.path.join(BASE_DIR, "clean_extra")
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
