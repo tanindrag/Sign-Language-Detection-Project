@@ -1,0 +1,9 @@
+data_jpg/
+report/
+bad_lighting/
+clean_bad_lighting/
+clean_extra/
+clean_good_lighting/
+extra/
+good_lighting/
+*.csv
