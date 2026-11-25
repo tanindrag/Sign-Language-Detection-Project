@@ -42,81 +42,140 @@ function reset() {
 }
 
 // Load original trained model
+
 async function load() {
-    const r = await Promise.all([
-        fetch('weights.json'),
-        fetch('asl_weights.bin')
+    status('Loading model — version 3...');
+
+    await tf.ready();
+
+    const responses = await Promise.all([
+        fetch('weights.json?v=3'),
+        fetch('asl_weights.bin?v=3')
     ]);
 
-    if (r.some(x => !x.ok)) {
-        throw Error('Model files not found');
+    if (responses.some(r => !r.ok)) {
+        throw new Error('Model files not found');
     }
 
-    const specs = await r[0].json();
-    const bytes = await r[1].arrayBuffer();
+    const specs = await responses[0].json();
+    const bytes = await responses[1].arrayBuffer();
 
-    model = tf.sequential();
+    let offset = 0;
 
-    const l = tf.layers;
+    const w = specs.map(s => {
+        const values = new Float32Array(
+            bytes, offset, s.count
+        );
 
-    model.add(l.conv2d({
-        inputShape: [28, 28, 1],
-        filters: 16,
-        kernelSize: 3,
-        activation: 'relu'
-    }));
+        offset += s.count * 4;
 
-    model.add(l.batchNormalization({
-        epsilon: 0.001
-    }));
+        return tf.tensor(values, s.shape);
+    });
 
-    model.add(l.maxPooling2d({
-        poolSize: 2,
-        strides: 2
-    }));
+    if (w.length !== 20 || offset !== bytes.byteLength) {
+        throw new Error('Invalid model weights');
+    }
 
-    model.add(l.dropout({
-        rate: 0.3
-    }));
+    // Batch normalisation using original Keras weights
+    function bn(x, i) {
+        return tf.batchNorm(
+            x,
+            w[i + 2], // Moving mean
+            w[i + 3], // Moving variance
+            w[i + 1], // Beta
+            w[i],     // Gamma
+            0.001
+        );
+    }
 
-    model.add(l.conv2d({
-        filters: 32,
-        kernelSize: 3,
-        activation: 'relu'
-    }));
+    // Direct inference using original CNN architecture
+    model = {
+        predict(input) {
+            return tf.tidy(() => {
+                // First convolution
+                let x = tf.conv2d(
+                    input, w[0], 1, 'valid'
+                );
 
-    model.add(l.batchNormalization({
-        epsilon: 0.001
-    }));
+                x = tf.relu(tf.add(x, w[1]));
+                x = bn(x, 2);
+                x = tf.maxPool(x, 2, 2, 'valid');
 
-    model.add(l.maxPooling2d({
-        poolSize: 2,
-        strides: 2
-    }));
+                // Second convolution
+                x = tf.conv2d(
+                    x, w[6], 1, 'valid'
+                );
 
-    model.add(l.dropout({
-        rate: 0.5
-    }));
+                x = tf.relu(tf.add(x, w[7]));
+                x = bn(x, 8);
+                x = tf.maxPool(x, 2, 2, 'valid');
 
-    model.add(l.flatten());
+                // Flatten
+                x = x.reshape([-1, 800]);
 
-    model.add(l.dense({
-        units: 64,
-        activation: 'relu'
-    }));
+                // Dense layer
+                x = tf.relu(
+                    tf.add(
+                        tf.matMul(x, w[12]),
+                        w[13]
+                    )
+                );
 
-    model.add(l.batchNormalization({
-        epsilon: 0.001
-    }));
+                x = bn(x, 14);
 
-    model.add(l.dropout({
-        rate: 0.3
-    }));
+                // Output layer
+                x = tf.add(
+                    tf.matMul(x, w[18]),
+                    w[19]
+                );
 
-    model.add(l.dense({
-        units: 24,
-        activation: 'softmax'
-    }));
+                return tf.softmax(x);
+            });
+        }
+    };
+
+    // Validate model inference
+    tf.tidy(() => {
+        const result = model.predict(
+            tf.zeros([1, 28, 28, 1])
+        ).dataSync();
+
+        if (
+            result.length !== 24 ||
+            !result.every(Number.isFinite)
+        ) {
+            throw new Error('Model validation failed');
+        }
+
+        console.log('Model V3 validated:', result);
+    });
+
+    status('Model loaded. Initialising hand detector...');
+
+    hands = new Hands({
+        locateFile: file =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
+    });
+
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.7
+    });
+
+    hands.onResults(handle);
+
+    await hands.initialize();
+
+    $('start').disabled = false;
+    $('upload').disabled = false;
+
+    status(
+        'Ready (V3). Start the camera or upload a hand image.'
+    );
+}
+
 
     // Read original model weights
     let offset = 0;
